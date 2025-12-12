@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuis Interaktif Dinamis</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+        .form-section { margin-bottom: 30px; border: 1px solid #ccc; padding: 20px; max-width: 600px; margin: 0 auto; }
+        .question { font-size: 20px; margin-bottom: 20px; }
+        .options { display: flex; flex-direction: column; gap: 10px; max-width: 400px; margin: 0 auto; }
+        button { padding: 10px; font-size: 16px; cursor: pointer; border: 1px solid #ccc; background: white; }
+        button.correct { background: green; color: white; }
+        button.incorrect { background: red; color: white; }
+        #result { margin-top: 20px; font-weight: bold; }
+        #next { display: none; margin-top: 20px; }
+        #score { display: none; margin-top: 20px; font-size: 18px; }
+        input, select { width: 100%; padding: 8px; margin: 5px 0; }
+        #quiz { display: none; }
+    </style>
+</head>
+<body>
+    <h1>Kuis Latihan Soal Psikologi</h1>
+    
+    <!-- Form untuk Input Soal -->
+    <div class="form-section">
+     
+        <button onclick="startQuiz()">Mulai Kuis</button>
+    </div>
+
+    <!-- Bagian Kuis -->
+    <div id="quiz">
+        <div class="question" id="question"></div>
+        <div class="options" id="options"></div>
+        <div id="result"></div>
+        <button id="next">Next</button>
+    </div>
+    <div id="score"></div>
+
+    <script>
+        let questions = JSON.parse(localStorage.getItem('questions')) || [];  // Load dari localStorage
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let answered = false;
+
+        function addQuestion() {
+            const question = document.getElementById('questionInput').value.trim();
+            const optionA = document.getElementById('optionA').value.trim();
+            const optionB = document.getElementById('optionB').value.trim();
+            const optionC = document.getElementById('optionC').value.trim();
+            const optionD = document.getElementById('optionD').value.trim();
+            const correct = parseInt(document.getElementById('correctSelect').value);
+
+            if (!question || !optionA || !optionB || !optionC || !optionD || isNaN(correct)) {
+                document.getElementById('addMessage').textContent = 'Isi semua field!';
+                return;
+            }
+
+            questions.push({
+                question: question,
+                options: [`A. ${optionA}`, `B. ${optionB}`, `C. ${optionC}`, `D. ${optionD}`],
+                correct: correct
+            });
+
+            localStorage.setItem('questions', JSON.stringify(questions));  // Simpan ke localStorage
+            document.getElementById('addMessage').textContent = 'Soal ditambahkan!';
+            // Reset form
+            document.getElementById('questionInput').value = '';
+            document.getElementById('optionA').value = '';
+            document.getElementById('optionB').value = '';
+            document.getElementById('optionC').value = '';
+            document.getElementById('optionD').value = '';
+            document.getElementById('correctSelect').value = '';
+        }
+
+        function startQuiz() {
+            if (questions.length === 0) {
+                alert('Tambah soal dulu!');
+                return;
+            }
+            document.querySelector('.form-section').style.display = 'none';
+            document.getElementById('quiz').style.display = 'block';
+            currentQuestionIndex = 0;
+            score = 0;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            answered = false;
+            const q = questions[currentQuestionIndex];
+            document.getElementById('question').textContent = q.question;
+            document.getElementById('options').innerHTML = '';
+            document.getElementById('result').textContent = '';
+            document.getElementById('next').style.display = 'none';
+
+            q.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.onclick = () => checkAnswer(index);
+                document.getElementById('options').appendChild(button);
+            });
+        }
+
+        function checkAnswer(selectedIndex) {
+            if (answered) return;
+            answered = true;
+            const q = questions[currentQuestionIndex];
+            const buttons = document.querySelectorAll('.options button');
+            buttons.forEach((btn, idx) => {
+                if (idx === q.correct) {
+                    btn.classList.add('correct');
+                } else if (idx === selectedIndex) {
+                    btn.classList.add('incorrect');
+                }
+            });
+
+            if (selectedIndex === q.correct) {
+                score++;
+                document.getElementById('result').textContent = 'Benar!';
+            } else {
+                document.getElementById('result').textContent = 'Salah! Jawaban benar: ' + q.options[q.correct];
+            }
+            document.getElementById('next').style.display = 'block';
+        }
+
+        document.getElementById('next').onclick = () => {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questions.length) {
+                loadQuestion();
+            } else {
+                document.getElementById('quiz').style.display = 'none';
+                document.getElementById('score').textContent = `Kuis selesai! Skor kamu: ${score}/${questions.length}`;
+                document.getElementById('score').style.display = 'block';
+            }
+        };
+    </script>
+</body>
+</html>
